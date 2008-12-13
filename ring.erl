@@ -3,9 +3,7 @@
 
 
 benchmark(Times, Message) ->
-  L = lists:seq(1, Times),
-  Pid = spawn(fun ringpass/0),
-  Pid ! {self(), L, Message},
+  spawn(fun ringpass/0) ! {self(), Times, Message},
   receive
     {finished, Message} ->
       io:format("Finished sending ~p~n", [Message])
@@ -14,10 +12,10 @@ benchmark(Times, Message) ->
 
 ringpass() ->
   receive
-    {Parent, [H|T], Message} ->
-      io:format("Process: ~p received count ~p~n", [self(),H]),
-      spawn(fun ringpass/0) ! {Parent, T, Message};
-    {Parent, [], Message} -> 
+    {Parent, 1, Message} -> 
       io:format("Process: ~p received last count ~n", [self()]),
-      Parent ! {finished, Message}
+      Parent ! {finished, Message};
+    {Parent, Times, Message} ->
+      io:format("Process: ~p received count ~p~n", [self(),Times]),
+      spawn(fun ringpass/0) ! {Parent, Times - 1, Message}
   end.
